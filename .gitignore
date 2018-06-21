@@ -1,0 +1,10 @@
+bin/
+DATA/
+lib/
+src/message/
+*.a
+*.o
+*.h~
+*.c~
+*.user
+src/module/ObstacleDetector/ObstacleDetector/ObstacleDetector.pro.user.8aef827

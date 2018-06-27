@@ -16,7 +16,7 @@
 #include <cmath>
 #include <opencv/cv.h>
 #include <opencv2/highgui/highgui.hpp>
-
+#include<python2.7/Python.h>
 /* alv data structure, which contians:
  *  1.  point cloud: one frame consists of 16 beams, in Strongest or Last mode
  *      of VLP16 lidar, each beam is made up of around 75*12*2 points, but in
@@ -339,6 +339,8 @@ public:
     bool setup();
     void cleanup();
 
+    bool parse_data_online(float *point,int length);
+
     bool parse_16_process(u_int8_t *cache_L, u_int8_t *cache_R);
     bool parse_16data_online(LIDAR16_MSG *lidar16_msg);          // parse lidar16 raw data to generate point cloud into alv_data
     bool parse_16data_offline(const std::string filename_L, const std::string filename_R);
@@ -359,7 +361,8 @@ public:
     bool parse_1data_online(LIDAR1_MSG *Lidar1_Data);
     bool parse_1data_offline(const std::string &filename);
 
-    void show_result();     // show detection result
+//    void show_result();     // show detection result
+    PyObject* show_result(char* name);     // show detection result
     void show_cloud();      // show point cloud
     void save_grid_map(const std::string &filename);   // save grid_map
 

@@ -393,6 +393,7 @@ void POSITIVE_DETECTOR::filt_grid(ALV_DATA *alv_data, int win_size, int ths)
 void POSITIVE_DETECTOR::detect_obstacle_grid(ALV_DATA *alv_data)
 {
     mark_car_area(alv_data);
+    cout<<HDL32_BEAM_NUM<<" "<<HDL32_BEAM_POINTSIZE<<endl;
     update_grids(alv_data, (const alv_Point3f**)alv_data->lidar32_pointcloud, HDL32_BEAM_NUM, HDL32_BEAM_POINTSIZE);
     update_grids(alv_data, (const alv_Point3f**)alv_data->lidar16_pointcloud_L, VLP16_BEAM_NUM, VLP16_BEAM_POINTSIZE);
     update_grids(alv_data, (const alv_Point3f**)alv_data->lidar16_pointcloud_R, VLP16_BEAM_NUM, VLP16_BEAM_POINTSIZE);

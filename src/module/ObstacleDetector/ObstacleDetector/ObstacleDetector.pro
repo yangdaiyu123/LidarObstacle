@@ -4,8 +4,8 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
-#TARGET = ObstacleDetectorLoopmain
-TARGET = data_parse.so
+TARGET = ObstacleDetectorLoopmain
+#TARGET = data_parse.so
 DESTDIR = /home/wzq/QtProjects/Obstacle/bin/
 OBJECTS_DIR = ./
 

@@ -14,7 +14,9 @@
 #include <cassert>
 #include <cmath>
 #include <cctype>
+#include<python2.7/Python.h>
 #include "detect_negative_obstacle.h"
+#include "detect_positive_obstacle.h"
 using namespace std;
 using namespace cv;
 /* alv_Point3f
@@ -60,7 +62,7 @@ VLP16_INTRINSIC_PARA::VLP16_INTRINSIC_PARA()
 
 PARA_TABLE::PARA_TABLE()
 {
-    para_base_dir = "./parameters";
+    para_base_dir = "/home/wzq/QtProjects/Obstacle/bin/parameters";
 
     grid_size = 0;
     grid_rows = 0;
@@ -746,11 +748,14 @@ void ALV_DATA::cleanup()
           result.at<Vec3b>(row, col) = Vec3b(0,0,0);      	// BGR, 黑
 }
 
-void ALV_DATA::show_result()
+PyObject* ALV_DATA::show_result(char* name)
 {
     GRID **grids = grid_map.grids;
     int Rows = para_table.grid_rows;
     int Cols = para_table.grid_cols;
+    PyObject* python_result = PyList_New(0);
+    PyList_Append(python_result,PyInt_FromLong(Rows));
+    PyList_Append(python_result,PyInt_FromLong(Cols));
     for(int row = 0; row < Rows; row++)
     {
         for(int col = 0; col < Cols; col++)
@@ -774,7 +779,10 @@ void ALV_DATA::show_result()
             else if(grids[row][col].attribute == GRID_TRAVESABLE/* || grids[row][col].attribute == GRID_ESTIMATED_GROUND*/)
                 result.at<Vec3b>(row, col) = Vec3b(50,50,50);   	// 灰
             else if(grids[row][col].attribute == GRID_POS_OBS)
+            {
                 result.at<Vec3b>(row, col) = Vec3b(0,0,255);     	// 红
+                PyList_Append(python_result,PyInt_FromLong(row*Cols+col));
+            }
             else if(grids[row][col].attribute == GRID_NEG_OBS)
                 result.at<Vec3b>(row, col) = Vec3b(255,255,0);  	// 浅蓝
             else if(grids[row][col].attribute == GRID_DANGEROUS)
@@ -826,8 +834,9 @@ void ALV_DATA::show_result()
     cv::Size dsize = cv::Size(2*Cols, 2*Rows);
     Mat dresult = Mat::zeros(dsize, CV_8UC3);
     resize(result, dresult, dsize);
-    imshow("result", dresult);
+    imshow(name, dresult);
     waitKey(1);
+    return python_result;
 }
 
 void ALV_DATA::show_cloud()
@@ -1504,7 +1513,34 @@ bool ALV_DATA::parse_32data_offline(const std::string filename)
         i++;
     }
     num = i;
+    cout<<"wangzhiqing "<<num<<endl;
     calib_32data();
+    return true;
+}
+bool ALV_DATA::parse_data_online(float *point,int length)
+{
+    int i = 0;
+    cout<<"wangzhiqing"<<endl;
+    while(i<length)
+    {
+        for(int j=0;j<32;j++)
+        {
+            lidar32_pointcloud[j][i].valid = true;
+            lidar32_pointcloud[j][i].intensity = 255;
+            lidar32_pointcloud[j][i].angleH = i;//useless
+            lidar32_pointcloud[j][i].angleV = int16_t(j*100);//useless
+
+            lidar32_pointcloud[j][i].x = 100 * point[i];
+            lidar32_pointcloud[j][i].y = -100 * point[i+1];
+            lidar32_pointcloud[j][i].z = -100 * point[i+2];
+            lidar32_pointcloud[j][i].distance = sqrt(point[i]*point[i]
+                                                     +point[i+1]*point[i+1]
+                    +point[i+2]*point[i+2]) * 1000;
+        }
+        i=i+1;
+    }
+//    cout<<lidar32_pointcloud[0][0].x<<" "<<lidar32_pointcloud[0][0].y<<" "<<lidar32_pointcloud[0][0].z<<" "<<endl;
+    num = length;
     return true;
 }
 
@@ -1920,4 +1956,20 @@ void ALV_DATA::save_grid_map(const std::string &filename)
                   <<grid_map.grids[row][col].dis_height<<"\t"
                   <<grid_map.grids[row][col].dis_height<<endl;
     fileout.close();
+}
+extern "C"
+{
+
+
+    PyObject* tmp(float *a,int b,char *c){
+        POSITIVE_DETECTOR *positive_detector = POSITIVE_DETECTOR::get_instance();
+        ALV_DATA *lidar = new ALV_DATA;
+        if(!lidar->setup())
+        {
+            exit(-1);
+        }
+        lidar->parse_data_online(a,b);
+    positive_detector->detect(lidar);
+    PyObject* python_result = lidar->show_result(c);
+    return python_result;}
 }
